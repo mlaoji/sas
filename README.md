@@ -7,7 +7,7 @@ Small And Strong, 小而强大
 写业务接口简单快捷高效，做管理后台也不在话下
 
 # PHP VERSION
->= 5.2
+﹥= 5.2
 
 ## Quick Start
 
