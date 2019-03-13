@@ -48,7 +48,8 @@ function import($file = null, $depend = true) {/*{{{*/
         return false;
     }
 	
-    if(!DEV_MODE && is_file(DIR_FS_TMP.'/sas.php')) {
+    //删除 lock 文件会触发更新缓存
+    if(!DEV_MODE && is_file(DIR_FS_TMP . '/lock') && is_file(DIR_FS_TMP.'/sas.php')) {
         return include(DIR_FS_TMP.'/sas.php');
     } else {
         global $_sas_inc;
@@ -91,15 +92,8 @@ function genCache() {/*{{{*/
             $_sas_inc .= "include(APPLICATION_DIR . '/vendor/autoload.php');";
         }
 
-        $fp=fopen(DIR_FS_TMP . '/lock','w+');
-        if(flock($fp, LOCK_EX)) {
-            Import::genCache($_sas_inc);
-            unset($_sas_inc);
-
-            fwrite($fp,"ok");
-            flock($fp, LOCK_UN);
-        }
-        fclose($fp);
+        Import::genCache($_sas_inc);
+        unset($_sas_inc);
     }   
 
     if(is_file(APPLICATION_DIR . '/vendor/autoload.php')) {

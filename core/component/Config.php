@@ -11,8 +11,11 @@ class Config
         return $confs[$conf_key];
 	}/*}}}*/
 
-    public static function flushCache() {/*删除缓存{{{*/
-        if(defined("SAS_VARCACHE")) {
+    /**
+     * 清除缓存
+     */
+    public static function flushCache() {/*{{{*/
+        if(function_exists("shmop_open")) {
             //flush config
             self::flushCacheFiles(CONFIG_DIR.'/App.conf.php');
         }
@@ -26,18 +29,20 @@ class Config
                 self::flushCacheFiles($path .'/'.$f); 
             }
         } else {
-            sas_varcache_unset($path); 
+            $shmop = new Shmop(ftok(__FILE__, "t"));
+            $shmop->delete($path);
         }
     }/*}}}*/
 
     private static function _getFileVars($file_path) {/*{{{*/
-        if(defined("SAS_VARCACHE")) {   
-            $s =sas_varcache_get($file_path); 
+        if(function_exists("shmop_open")) {
+            $shmop = new Shmop(ftok(__FILE__, "t"));
+            $s = $shmop->get($file_path);
             if(!$s) {
                 unset($s);
                 include($file_path); 
                 $s =  get_defined_vars();
-                sas_varcache_set($file_path, $s);
+                $shmop->set($file_path, $s, defined('SAS_VARCACHE_TTL') ? SAS_VARCACHE_TTL : 0);
             }
             return $s; 
         } else {
@@ -45,4 +50,5 @@ class Config
             return get_defined_vars(); 
         }   
     }/*}}}*/
+
 }

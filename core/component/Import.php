@@ -19,20 +19,43 @@ class DAO__DAO__ extends DAOProxy{
 }';
 
     public static function genCache($_inc) {/*{{{*/
-        $_inc .= self::autoLoad();
-        return Files::write(DIR_FS_TMP.'/sas.php', '<?php define("IMPORT_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');' . $_inc);
+        $fp = @fopen(DIR_FS_TMP . '/lock','w+');
+        if($fp) {
+            if(flock($fp, LOCK_EX | LOCK_NB)) {
+                self::_genCache($_inc);
+
+                fwrite($fp, "ok");
+                flock($fp, LOCK_UN);
+            } else {
+                self::_genCache($_inc, false);
+            }
+            fclose($fp);
+        } else {
+            self::_genCache($_inc, false);
+        }
     }/*}}}*/
 
-    public static function autoLoad() {/*{{{*/
+    public static function _genCache($_inc, $getLock = true) {/*{{{*/
         //get class path
-        $_inc = self::compatibleCode();
-        $_inc .= self::getAutoLoadContent();
-        Files::write(DIR_FS_TMP.'/auto_load.php', '<?php '. $_inc);
-        include(DIR_FS_TMP.'/auto_load.php');
+        $_autoload_inc = self::getAutoLoadContent();
+
+        if(!$getLock) {
+            $filename = tempnam(DIR_FS_TMP, 'auto_load');
+        } else {
+            $filename = DIR_FS_TMP . '/auto_load.php';
+        }
+
+        Files::write($filename, '<?php '. $_autoload_inc);
+        include($filename);
+
         //É¾³ýloadÎÄ¼þ»º´æ
         Config::flushCache();
 
-        return $_inc;
+        if($getLock) {
+            Files::write(DIR_FS_TMP.'/sas.php', '<?php define("IMPORT_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');' . $_inc . $_autoload_inc);
+        } else {
+            unlink($filename);
+        }
     }/*}}}*/
 
     private static function getAutoLoadContent() {/*{{{*/
@@ -61,7 +84,7 @@ class DAO__DAO__ extends DAOProxy{
         $_inc .= ' return $a[$k];';
         $_inc .= '}else{';
         $_inc .= '$funcs = spl_autoload_functions();';
-        $_inc .= 'if(count($funcs) > 1) { return;} else {die("Class $k is not found!"); } } }';
+        $_inc .= 'if(count($funcs) > 1) { return;} else {die("Class $k is not found!");}}}';
 
         $controller_list = self::getRegControllers();
         $_inc .= ' function getRegControllers(){';
@@ -163,44 +186,5 @@ class DAO__DAO__ extends DAOProxy{
         return $classes;
     }/*}}}*/
 
-    private static function compatibleCode() {/*{{{*/
-        $_inc = '';
-
-        $sas_varcache = true;
-        if(function_exists('apc_fetch')){
-            $_inc .='function sas_varcache_get($key){return apc_fetch($key);}';
-            $_inc .='function sas_varcache_set($key, $value, $ttl='.(defined('SAS_VARCACHE_TTL') ? SAS_VARCACHE_TTL : 0).'){return apc_store($key, $value, $ttl);}';
-            $_inc .='function sas_varcache_unset($key){return apc_delete($key);}';
-        }elseif(function_exists('eaccelerator_get')) {
-            $_inc .='function sas_varcache_get($key){return eaccelerator_get($key);}';
-            $_inc .='function sas_varcache_set($key, $value, $ttl='.(defined('SAS_VARCACHE_TTL') ? SAS_VARCACHE_TTL : 0).'){
-                eaccelerator_lock($key);
-                $rs = eaccelerator_put($key, $value, $ttl);
-                eaccelerator_unlock($key);
-                return $rs; }';
-            $_inc .='function sas_varcache_unset($key){return eaccelerator_rm($key);}';
-        }elseif(function_exists('xcache_get')){
-            $_inc .='function sas_varcache_get($key){return xcache_get($key);}';
-            $_inc .='function sas_varcache_set($key, $value, $ttl='.(defined('SAS_VARCACHE_TTL') ? SAS_VARCACHE_TTL : 0).'){
-                $fp = fopen(DIR_FS_TMP . "/varcahce_" . md5($key). ".lock", "w");
-                flock($fp, LOCK_EX);
-                if(xcache_isset($key)) {
-                    fclose($fp);
-                    return xcache_get($key);
-                }
-
-                $rs = xcache_set($key, $value, $ttl);
-                fclose($fp);
-                return $rs; }';
-            $_inc .='function sas_varcache_unset($key){return xcache_unset($key);}';
-        }else{
-            $sas_varcache = false;
-        }
-
-        if($sas_varcache) {
-            $_inc .= 'define("SAS_VARCACHE", true);';
-        }
-        return $_inc;
-    }/*}}}*/
 }
 

@@ -1,5 +1,7 @@
 <?php
-//拦截器
+/**
+ * 拦截器
+ */
 class Interceptor
 {
     public static function ensure($bool, $errno, $args = array(), $data = array()) {/*{{{*/
