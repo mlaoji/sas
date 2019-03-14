@@ -14,23 +14,27 @@ class Shmop
         $this->perms  = $perms;
     }
 
-    public function open($size = 0, $perms = 0644)
+    public function open($size = 0) 
     {/*{{{*/
         if(0 == $size) {//只读
             $this->shmid = $this->shmid ? $this->shmid : @shmop_open($this->shmkey, 'a', 0, 0);
-            return ;
+            return (bool)$this->shmid;
         }
 
         //释放内存，重新申请, 每次按内容大小申请
         if($this->shmid) {
             if(shmop_size($this->shmid) != $size) {
-                shmop_delete($this->shmid);
+                if(!@shmop_delete($this->shmid)) {
+                    return false;
+                }
             } 
 
             shmop_close($this->shmid);
         }
 
-        $this->shmid = shmop_open($this->shmkey, 'c', $this->perms, $size);
+        $this->shmid = @shmop_open($this->shmkey, 'c', $this->perms, $size);
+
+        return (bool)$this->shmid;
     }/*}}}*/
  
     /**
@@ -56,10 +60,15 @@ class Shmop
 
             $content = json_encode($data);
 
-            $this->open(strlen($content));
-            shmop_write($this->shmid, $content, 0);
+            if($this->open(strlen($content))) {
+                shmop_write($this->shmid, $content, 0);
+            }
         
             flock($fp, LOCK_UN);
+
+            if(DEV_MODE) {//解决开发环境 cli 和 nginx 使用不同用户时的权限问题
+                @chmod($lock, 0777);
+            }
         }
         fclose($fp);
     }/*}}}*/
@@ -70,8 +79,7 @@ class Shmop
      */
     public function getAll()
     {
-        $this->open();
-        return $this->shmid ? json_decode(trim(shmop_read($this->shmid, 0, 0)), true) : array();
+        return $this->open() ? json_decode(trim(shmop_read($this->shmid, 0, 0)), true) : array();
     }
 
     /**
@@ -97,8 +105,9 @@ class Shmop
 
             $content = json_encode($data);
 
-            $this->open(strlen($content));
-            shmop_write($this->shmid, $content, 0);
+            if($this->open(strlen($content))) {
+                shmop_write($this->shmid, $content, 0);
+            }
         
             flock($fp, LOCK_UN);
         }

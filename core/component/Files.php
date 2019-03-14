@@ -26,12 +26,15 @@
                  flock($fp, LOCK_UN);
 
                  @unlink($tmp_file);
-                 //chmod($file, 0755);
              } else {//写临时文件失败
                  ftruncate($fp, 0);
                  fwrite($fp, $contents); 
                  fflush($fp);
                  flock($fp, LOCK_UN);
+             }
+
+             if(DEV_MODE) {//解决开发环境 cli 和 nginx 使用不同用户时的权限问题
+                 @chmod($file, 0777);
              }
          }
 
