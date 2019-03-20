@@ -21,6 +21,7 @@ class DAO__DAO__ extends DAOProxy{
     public static function genCache($_inc) {/*{{{*/
         $fp = @fopen(DIR_FS_TMP . '/lock','w+');
         if($fp) {
+            //没有抢到锁不堵塞
             if(flock($fp, LOCK_EX | LOCK_NB)) {
                 self::_genCache($_inc);
 
@@ -37,7 +38,7 @@ class DAO__DAO__ extends DAOProxy{
 
     public static function _genCache($_inc, $getLock = true) {/*{{{*/
         //get class path
-        $_autoload_inc = self::getAutoLoadContent();
+        $_autoload_inc = self::getAutoLoadContent($getLock);
 
         if(!$getLock) {
             $filename = tempnam(DIR_FS_TMP, 'auto_load');
@@ -58,7 +59,7 @@ class DAO__DAO__ extends DAOProxy{
         }
     }/*}}}*/
 
-    private static function getAutoLoadContent() {/*{{{*/
+    private static function getAutoLoadContent($getLock = true) {/*{{{*/
         //get class path
         self::getClassPath(SAS_DIR.'/component');
         self::getClassPath(APPLICATION_DIR.'/src/controllers');
@@ -75,7 +76,7 @@ class DAO__DAO__ extends DAOProxy{
             }
         }
         //顺序不能反，getDAOClassPath要在获得self::$classpaths之后
-        self::getDAOClassPath();
+        self::getDAOClassPath($getLock);
 
         $_inc = 'define("AUTOLOAD_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');';
         $_inc .= ' function getClassPath($k){';
@@ -94,7 +95,7 @@ class DAO__DAO__ extends DAOProxy{
         return $_inc;
     }/*}}}*/
 
-    private static function getDAOClassPath() {/*{{{检测是否已定义，若未定义，则自动生成并保存在TMP下*/
+    private static function getDAOClassPath($getLock = true) {/*{{{检测是否已定义，若未定义，则自动生成并保存在TMP下*/
         $tables = Config::get('TABLE_CONF');
 
         foreach((array)$tables as $k=>$v) {
@@ -102,12 +103,12 @@ class DAO__DAO__ extends DAOProxy{
             $k_no_underline = str_replace('_', '', $k_lower);
             if(!isset(self::$classpaths['dao'.$k_no_underline])) {
                 //gen dao file
-                self::$classpaths['dao'.$k_no_underline] = self::genDao($k_lower);
+                self::$classpaths['dao'.$k_no_underline] = self::genDao($k_lower, $getLock);
             }
         }
     }/*}}}*/
 
-    private static function genDao($k) {/*{{{*/
+    private static function genDao($k, $getLock = true) {/*{{{*/
         $k_parts = explode("_", $k);
         if(count($k_parts) > 1) {
             foreach($k_parts as $v) {
@@ -119,8 +120,14 @@ class DAO__DAO__ extends DAOProxy{
 
         $dao_script = str_replace(array("__DAO__", "__TABLE__"), array($class, $k), self::$dao_tpl);
         $path = DIR_FS_TMP."/dao/DAO".$class.".php";
-        Files::write($path, $dao_script);
-        Files::write($path, php_strip_whitespace($path));
+        if($getLock) {
+            Files::write($path, $dao_script);
+        } else {//没有拿到锁，生成缓存文件, 直接include, 程序逻辑中用到DAO时不再走autoload逻辑
+            $tmpname = tempnam(DIR_FS_TMP, 'dao');
+            file_put_contents($tmpname, $dao_script);
+            include($tmpname);
+            unlink($tmpname);
+        }
 
         return $path;
     }/*}}}*/

@@ -5,7 +5,7 @@ error_reporting(E_ALL & ~E_NOTICE);
 !defined("TEST_MODE") && define("TEST_MODE", false);//测试模式
 !defined("DIR_FS_TMP") && define("DIR_FS_TMP", APPLICATION_DIR.'/tmp');
 !defined("CONFIG_DIR") && define("CONFIG_DIR", APPLICATION_DIR.'/config');
-!defined("TIMEZONE") && define("TIMEZONE", "Asia/shanghai");//默认时区
+!defined("TIMEZONE") && define("TIMEZONE", "UTC");//默认时区
 
 ini_set("date.timezone", TIMEZONE);
 
@@ -49,9 +49,12 @@ function import($file = null, $depend = true) {/*{{{*/
     }
 	
     //删除 lock 文件会触发更新缓存
-    if(!DEV_MODE && is_file(DIR_FS_TMP . '/lock') && is_file(DIR_FS_TMP.'/sas.php')) {
+    if(!DEV_MODE && !defined("NO_CACHED") && is_file(DIR_FS_TMP . '/lock') && is_file(DIR_FS_TMP.'/sas.php')) {
         return include(DIR_FS_TMP.'/sas.php');
     } else {
+        //避免在多次调用import中途, 由于其他脚本优先生成sas.php, 造成"重复定义" 的错误
+        !defined("NO_CACHED") && define("NO_CACHED", true);
+
         global $_sas_inc;
 
         if($file && $depend) {
