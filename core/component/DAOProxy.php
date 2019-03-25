@@ -42,6 +42,10 @@ class DAOProxy
             if(true === $db_config["slaves"][$slave_key]["debug"]) {
                 $this->dbReader->setDebug(true);
             }
+            
+            if(true === $db_config["slaves"][$slave_key]["log"]) {
+                $this->dbReader->setLog(true);
+            }
         }
 
         $table_name = isset($table_config["table"]) ? $table_config["table"] : $dao_name;

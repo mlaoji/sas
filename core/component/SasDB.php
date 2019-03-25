@@ -193,6 +193,10 @@ class SasDBPDO
 	}/*}}}*/
 
 	public function execute($sql, $params = array(), $is_open_safe = true) {/*{{{*/
+		if($this->_log) {
+            Logger::other("sql", $sql, array("params" => implode(",", (array)$params)));
+		}
+
 		$this->_checkSafe($sql, $is_open_safe);
 
 		$arr_process_result = $this->_process($sql, $params);
@@ -212,15 +216,15 @@ class SasDBPDO
 					break;
 			}
 		}
-  
-		if($this->_log) {
-            Logger::other("sql", $sql, array("params" => implode(",", (array)$params)));
-		}
-
+ 
 		return $arr_process_result["execute_return"];
 	}/*}}}*/
 
 	public function query($sql, $params = array(), $is_open_safe = true) {/*{{{*/
+        if($this->_log) {
+            Logger::other("sql", $sql, array("params" => implode(",", (array)$params)));
+        }
+
 		$this->_checkSafe($sql, $is_open_safe);
 		$result = $this->_process($sql, $params);
 		return $result["stmt"];
