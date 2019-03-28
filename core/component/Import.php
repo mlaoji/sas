@@ -37,6 +37,9 @@ class DAO__DAO__ extends DAOProxy{
     }/*}}}*/
 
     public static function _genCache($_inc, $getLock = true) {/*{{{*/
+        //É¾³ýloadÎÄ¼þ»º´æ
+        Config::flushCache();
+
         //get class path
         $_autoload_inc = self::getAutoLoadContent($getLock);
 
@@ -48,9 +51,6 @@ class DAO__DAO__ extends DAOProxy{
 
         Files::write($filename, '<?php '. $_autoload_inc);
         include($filename);
-
-        //É¾³ýloadÎÄ¼þ»º´æ
-        Config::flushCache();
 
         if($getLock) {
             Files::write(DIR_FS_TMP.'/sas.php', '<?php define("IMPORT_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');' . $_inc . $_autoload_inc);
