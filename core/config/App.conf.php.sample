@@ -1,0 +1,38 @@
+<?php
+/*
+ * 示例配置
+ *
+ * /
+ 
+ //覆盖系统常量
+define("DEFAULT_ACTION", "test");
+define("DEFAULT_CONTROLLER", "test");
+
+$DB_CONF = array(
+    0 => array(//host_id = 0
+        'master' => array("host"=>"127.0.0.1", "port"=>"3306", "user"=>"root", "pass"=>"", "charset"=>"utf8mb4", "dbname"=>"test", "persistent"=>true, "unix_socket"=>""),
+        'slaves' => array(//支持一主多从, 和主一致则不用配置
+            array("host"=>"127.0.0.1", "port"=>"3306", "user"=>"root", "pass"=>"", "charset"=>"utf8mb4", "dbname"=>"test", "persistent"=>true, "unix_socket"=>"")
+        ),
+    ),
+);
+
+$TABLE_CONF＝array(//未配置则为默认值
+     //索引为DAO对应的名字，如DAOUser, 默认和表名一致, 要求小写，下划线自动转为驼峰
+    　"user" => array(
+        'table'=>"表名",//不指定时默认使用索引值
+        'key'=>"主键或唯一索引字段,多个用数组表示array(key1，key2), 默认为表名+id",
+        'host_id'=>"服务器ID",//默认:0
+        //分表规则
+        'table_shard'=>"分表数量", 
+        //分库规则
+        'db_shard'=>array(
+            10000000 => "服务器ID",//0< id <=10000000
+            20000000 => "服务器ID",//10000000 < id <= 20000000
+        ),
+        'field'=>'field1,field2'//字段,默认*
+     ),
+     "test" => array()//这样也是可以的，将使用默认值
+); 
+ 
+
