@@ -261,10 +261,10 @@ class DAOProxy
 	}/*}}}*/
 
     public function getAllRecords($start = 0, $num = 0, $order = "") {/*{{{*/
-    	return $this->getRecords("", $start, $num, null, $order);
+    	return $this->getRecords("", null, $start, $num, $order);
     }/*}}}*/
     
-    public function getRecords($where = "", $start = 0, $num = 0, $params = array(), $order = "") {/*{{{*/
+    public function getRecords($where = "", $params = array(), $start = 0, $num = 0, $order = "") {/*{{{*/
     	$sql = "select {$this->getFields()} from {$this->getTable()}";
         $index = $this->getIndex();
         $sql.= $index ? " force key(".$index.") " : "";
@@ -281,7 +281,7 @@ class DAOProxy
     	return $this->getDbReader()->getAll($sql, $params, false);
     }/*}}}*/
  
-    public function getList($where = "", $start = 0, $num = 0, $params = array(), $order = "") {/*{{{*/
+    public function getList($where = "", $params = array(), $start = 0, $num = 0, $order = "") {/*{{{*/
         $sql = "select SQL_CALC_FOUND_ROWS {$this->getFields()} from {$this->getTable()}";
         $index = $this->getIndex();
         $sql.= $index ? " force key(".$index.") " : "";
