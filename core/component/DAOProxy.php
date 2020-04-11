@@ -201,6 +201,10 @@ class DAOProxy
         return $this;
     }/*}}}*/
 
+    public function funcParam($param) {/*{{{*/
+        return $this->dbWriter->funcParam($param);
+    }/*}}}*/
+
     public function addRecord($info) {/*{{{*/
     	return $this->dbWriter->insert($this->getTable(), $info);
     }/*}}}*/
@@ -232,9 +236,9 @@ class DAOProxy
     	return $this->dbWriter->execute($sql, $relateid);
     }/*}}}*/
    
-    public function delRecordBy($where, $params = array()) {/*{{{*/
+    public function delRecordBy($where, $params = array(), $is_open_safe = true) {/*{{{*/
     	$sql = "delete from {$this->getTable()} where $where";
-    	return $this->dbWriter->execute($sql, $params);
+    	return $this->dbWriter->execute($sql, $params, $is_open_safe);
     }/*}}}*/
    
     public function getValue($field, $where, $params = array()) {/*{{{*/

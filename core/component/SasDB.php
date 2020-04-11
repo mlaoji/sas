@@ -259,21 +259,31 @@ class SasDBPDO
 			if(empty($fields)) {
 				throw new SasDBException("\$record 操作数据必须使用关联数组形式");
 			}
+            
+            $sql_record_part = "";
+            foreach($fields as $k => $field) {
+                if($k > 0) {
+                    $sql_record_part .= ",";
+                }
+
+                if($val = $this->getFuncParam($values[$k])) {
+                    $sql_record_part .= "`$field`=$val";
+                    unset($values[$k]);
+                } else {
+                    $sql_record_part .= "`$field`=?";
+                }
+            }
 		}
 
 		switch ($operate) {
 			case "insert":
 			case "replace":
-				$sql = "$operate into $table (`".implode("`,`", $fields)."`) values (".str_repeat("?,", count($fields) - 1)."?)";
+				$sql = "$operate into $table set " . $sql_record_part;
 				return $this->execute($sql, $values);
 				break;
 			case "update":
-				$sql = "update $table set ";
-				foreach($fields as $field) {
-					$sql .= "$field=?,";
-				}
-				$sql = substr($sql, 0, -1);
-
+				$sql = "update $table set " . $sql_record_part;
+				
 				if($condition) {
 					$sql .= " where ".$condition;
 				}
@@ -287,6 +297,24 @@ class SasDBPDO
 		}
 		return true;
 	}/*}}}*/
+
+    public function getFuncParam($param) {/*{{{*/
+        if(substr($param, 0, 5) == "#:F:#") {
+            return substr($param, 5); 
+        }
+
+        return "";
+    }/*}}}*/
+    
+    //拼装参数时，作为可执行字符，而不是字符串值
+    public function funcParam($param) {/*{{{*/
+        if("" != $param) {
+            return "#:F:#" . $param; 
+        }
+
+        return "";
+    }/*}}}*/
+
 
 	public function insert($table, $record) {/*{{{*/
 		return $this->_operate($table, $record, "insert");
