@@ -71,6 +71,10 @@ class Logger
         $this->log_file   = $log_config['logfile'];       //日志文件
         $this->log_path   = dirname($log_config['logfile']); //默认日志目录
         $this->other_log_files = $log_config['others'];   //其他日志文件
+
+        if(!is_dir($this->log_path)) {
+            mkdir($this->log_path, 0777, true);
+        }
     }/*}}}*/
 
     public static function getInstance() {/*{{{*/
@@ -234,7 +238,6 @@ class Logger
         } else {
             $log_file = $this->log_path . "/" . $key . ".log";
         }
-			
 
 		if ($this->log_split == self::LOG_SPLIT_DAY) {
             $log_file .= '.' . date("Ymd");
