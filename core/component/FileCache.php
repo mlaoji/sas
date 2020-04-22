@@ -34,12 +34,12 @@ class FileCache
 
 	public static function flush()
 	{
-		return Files::rmdirs(DIR_FS_TMP.'/vars');
+		return Files::rmdirs(TMP_DIR.'/vars');
 	}
 
 	private static function getdir($md5name, $dir=null)
 	{/*{{{*/
-		$dir =$dir ? $dir : (DIR_FS_TMP.'/vars');
+		$dir =$dir ? $dir : (TMP_DIR.'/vars');
 		if(LEVELS_DIR_CACHE) {
             for($i=0;$i<LEVELS_DIR_CACHE;$i++){
                 $dir.='/'.$md5name[$i];

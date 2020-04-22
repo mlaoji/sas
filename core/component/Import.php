@@ -19,7 +19,7 @@ class DAO__DAO__ extends DAOProxy{
 }';
 
     public static function genCache($_inc) {/*{{{*/
-        $fp = @fopen(DIR_FS_TMP . '/lock','w+');
+        $fp = @fopen(TMP_DIR . '/lock','w+');
         if($fp) {
             //没有抢到锁不堵塞
             if(flock($fp, LOCK_EX | LOCK_NB)) {
@@ -44,16 +44,16 @@ class DAO__DAO__ extends DAOProxy{
         $_autoload_inc = self::getAutoLoadContent($getLock);
 
         if(!$getLock) {
-            $filename = tempnam(DIR_FS_TMP, 'auto_load');
+            $filename = tempnam(TMP_DIR, 'auto_load');
         } else {
-            $filename = DIR_FS_TMP . '/auto_load.php';
+            $filename = TMP_DIR . '/auto_load.php';
         }
 
         Files::write($filename, '<?php '. $_autoload_inc);
         include($filename);
 
         if($getLock) {
-            Files::write(DIR_FS_TMP.'/sas.php', '<?php define("IMPORT_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');' . $_inc . $_autoload_inc);
+            Files::write(TMP_DIR.'/sas.php', '<?php define("IMPORT_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');' . $_inc . $_autoload_inc);
         } else {
             unlink($filename);
         }
@@ -119,11 +119,11 @@ class DAO__DAO__ extends DAOProxy{
         }
 
         $dao_script = str_replace(array("__DAO__", "__TABLE__"), array($class, $k), self::$dao_tpl);
-        $path = DIR_FS_TMP."/dao/DAO".$class.".php";
+        $path = TMP_DIR."/dao/DAO".$class.".php";
         if($getLock) {
             Files::write($path, $dao_script);
         } else {//没有拿到锁，生成缓存文件, 直接include, 程序逻辑中用到DAO时不再走autoload逻辑
-            $tmpname = tempnam(DIR_FS_TMP, 'dao');
+            $tmpname = tempnam(TMP_DIR, 'dao');
             file_put_contents($tmpname, $dao_script);
             include($tmpname);
             unlink($tmpname);

@@ -46,7 +46,7 @@ class Shmop
      */
     public function set($key, $val, $ttl = 0)
     {/*{{{*/
-        $lock = DIR_FS_TMP . "/shmop_" . $this->shmkey. ".lock";
+        $lock = TMP_DIR . "/shmop_" . $this->shmkey. ".lock";
         $fp = fopen($lock, "w");
         if(flock($fp, LOCK_EX | LOCK_NB)) {//只有抢到锁才更新
             $data = $this->getAll();
@@ -88,7 +88,7 @@ class Shmop
      */
     public function delete($key)
     {/*{{{*/
-        $lock = DIR_FS_TMP . "/shmop_" . $this->shmkey. ".lock";
+        $lock = TMP_DIR . "/shmop_" . $this->shmkey. ".lock";
         $fp = fopen($lock, "w");
         if(flock($fp, LOCK_EX)) {
             $data = $this->getAll();

@@ -54,10 +54,6 @@ class SasDBPDO
 
 	public function __construct($config) {/*{{{*/
 		$this->_config = $config;
-        if(defined("DEBUG") && DEBUG === true && $_GET["DEBUG"] == "Y") {
-            $this->setDebug(true);
-            $this->setOptimize(true);
-        }
 	}/*}}}*/
 
 	private function _connect() {/*{{{*/
@@ -107,10 +103,15 @@ class SasDBPDO
 		if($this->_optimize && preg_match("/^select/i", $sql)) {
 			$fetch_mode = $this->_fetch_type;
 			$this->setFetchMode(PDO::FETCH_ASSOC);
-			$debug = $this->_debug;
-			$this->setDebug(true);
-			SasDBExplainResult::draw($this->getAll("explain ".$this->getBindedSql($sql, $params)));
-			$this->setDebug($debug);
+
+			$sql = $this->getBindedSql($sql, $params);
+			$draw = SasDBExplainResult::draw($this->getAll("explain ".$sql));
+            if($this->_debug) {
+                print $draw;
+            }
+
+            Logger::other("sql_optimize", $sql . "\n" . $draw);
+
 			$this->setFetchMode($fetch_mode);
 		}
 
@@ -481,17 +482,19 @@ class SasDBExplainResult
 	public static function draw($result) {/*{{{*/
 		self::$result = $result;
 
-		if(PHP_SAPI != 'cli') {
-			self::drawHTML();
-		} else {
-			self::drawConsole();
-		}
+		//if(PHP_SAPI != 'cli') {
+		//	return self::drawHTML();
+		//} else {
+			return self::drawConsole();
+		//}
 	}/*}}}*/
 
 	public static function drawHTML() {/*{{{*/
-		print "<pre>\n";
-		self::drawConsole();
-		print "</pre>\n";
+		$res  = "<pre>\n";
+		$res .= self::drawConsole();
+		$res .= "</pre>\n";
+
+        return $res;
 	}/*}}}*/
 
 	public static function drawConsole() {/*{{{*/
@@ -509,27 +512,31 @@ class SasDBExplainResult
 		}
 
 		//draw title
-		self::drawLine($arr_max_length);
-		self::drawData(array_keys(self::$result[0]), $arr_max_length);
+		$res  = self::drawLine($arr_max_length);
+		$res .= self::drawData(array_keys(self::$result[0]), $arr_max_length);
 		//draw data
 		foreach(self::$result as $record) {
-			self::drawLine($arr_max_length);
-			self::drawData(array_values($record), $arr_max_length);
+			$res .= self::drawLine($arr_max_length);
+			$res .= self::drawData(array_values($record), $arr_max_length);
 		}
 
-		self::drawLine($arr_max_length);
+		$res .= self::drawLine($arr_max_length);
+
+        return $res;
 	}/*}}}*/
 
 	public static function drawLine($arr_length_list) {/*{{{*/
-		print "+";
+		$res = "+";
 		foreach($arr_length_list as $length) {
-			print str_repeat("-", $length)."+";
+			$res .= str_repeat("-", $length)."+";
 		}
-		print "\n";
+		$res .= "\n";
+
+        return $res;
 	}/*}}}*/
 
 	public static function drawData($arr_record_list, $arr_length_list) {/*{{{*/
-		print "|";
+		$res = "|";
 		$left = 0;
 		foreach ($arr_record_list as $i=>$value) {
 			$space  = floor(($arr_length_list[$i] - strlen($value)) / 2);
@@ -537,11 +544,13 @@ class SasDBExplainResult
 			$right  = $arr_length_list[$i] - $space;
 			$format = '%'.$space.'s%-'.$right.'s|';
 
-			printf($format, "", $value);
+			$res .= sprintf($format, "", $value);
 			$left  -= $space;
 			$left  += $arr_length_list[$i];
 		}
-		print "\n";
+		$res .= "\n";
+
+        return $res;
 	}/*}}}*/
 }
 

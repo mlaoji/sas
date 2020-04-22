@@ -28,9 +28,13 @@ class DAOProxy
         if(true === $db_config["master"]["debug"]) {
             $this->dbWriter->setDebug(true);
         }
-        
+       
         if(true === $db_config["master"]["log"]) {
             $this->dbWriter->setLog(true);
+        }
+        
+        if(true === $db_config["master"]["optimize"]) {
+            $this->dbWriter->setOptimize(true);
         }
 
         if(empty($db_config["slaves"])) {
@@ -45,6 +49,10 @@ class DAOProxy
             
             if(true === $db_config["slaves"][$slave_key]["log"]) {
                 $this->dbReader->setLog(true);
+            }
+
+            if(true === $db_config["slaves"][$slave_key]["optimize"]) {
+                $this->dbReader->setOptimize(true);
             }
         }
 
@@ -198,6 +206,11 @@ class DAOProxy
     public function setDebug($debug = true) {/*{{{*/
         $this->dbWriter->setDebug($debug);
         $this->dbReader->setDebug($debug);
+        return $this;
+    }/*}}}*/
+
+    public function setOptimize($debug = true) {/*{{{*/
+        $this->dbReader->setOptimize($debug);
         return $this;
     }/*}}}*/
 

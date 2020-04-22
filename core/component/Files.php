@@ -14,7 +14,7 @@
 
          $fp = fopen($file, "a");
          if(flock($fp, $ignore_block ? (LOCK_EX | LOCK_NB) : LOCK_EX)) {//LOCK_NB 只有抢到锁才更新, 主要用于写缓存文件, Windows 平台不支持
-             $tmp_file = DIR_FS_TMP .'/'. md5($file);
+             $tmp_file = TMP_DIR .'/'. md5($file);
              //先写临时文件,然后rename
              if (file_put_contents($tmp_file, $contents)) {
                  // Win32 有可能无法rename成功，先unlink 
