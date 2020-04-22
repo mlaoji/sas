@@ -19,6 +19,10 @@ class DAO__DAO__ extends DAOProxy{
 }';
 
     public static function genCache($_inc) {/*{{{*/
+        if(!is_dir(TMP_DIR)) {
+            mkdir(TMP_DIR, 0777, true);
+        }
+
         $fp = @fopen(TMP_DIR . '/lock','w+');
         if($fp) {
             //没有抢到锁不堵塞
@@ -133,6 +137,10 @@ class DAO__DAO__ extends DAOProxy{
     }/*}}}*/
 
     private static function getRegControllers() {/*{{{*/
+        if(!is_dir(APPLICATION_DIR.'/src/controllers')) {
+            return [];
+        }
+
         $controller_files = scandir(APPLICATION_DIR.'/src/controllers');
 
         $controllers = array();
