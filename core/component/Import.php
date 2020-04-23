@@ -25,7 +25,7 @@ class DAO__DAO__ extends DAOProxy{
 
         $fp = @fopen(TMP_DIR . '/lock','w+');
         if($fp) {
-            //æ²¡æœ‰æŠ¢åˆ°é”ä¸å µå¡
+            //Ã»ÓĞÇÀµ½Ëø²»¶ÂÈû
             if(flock($fp, LOCK_EX | LOCK_NB)) {
                 self::_genCache($_inc);
 
@@ -41,7 +41,7 @@ class DAO__DAO__ extends DAOProxy{
     }/*}}}*/
 
     public static function _genCache($_inc, $getLock = true) {/*{{{*/
-        //åˆ é™¤loadæ–‡ä»¶ç¼“å­˜
+        //É¾³ıloadÎÄ¼ş»º´æ
         Config::flushCache();
 
         //get class path
@@ -79,7 +79,7 @@ class DAO__DAO__ extends DAOProxy{
                 }
             }
         }
-        //é¡ºåºä¸èƒ½åï¼ŒgetDAOClassPathè¦åœ¨è·å¾—self::$classpathsä¹‹å
+        //Ë³Ğò²»ÄÜ·´£¬getDAOClassPathÒªÔÚ»ñµÃself::$classpathsÖ®ºó
         self::getDAOClassPath($getLock);
 
         $_inc = 'define("AUTOLOAD_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');';
@@ -99,7 +99,7 @@ class DAO__DAO__ extends DAOProxy{
         return $_inc;
     }/*}}}*/
 
-    private static function getDAOClassPath($getLock = true) {/*{{{æ£€æµ‹æ˜¯å¦å·²å®šä¹‰ï¼Œè‹¥æœªå®šä¹‰ï¼Œåˆ™è‡ªåŠ¨ç”Ÿæˆå¹¶ä¿å­˜åœ¨TMPä¸‹*/
+    private static function getDAOClassPath($getLock = true) {/*{{{¼ì²âÊÇ·ñÒÑ¶¨Òå£¬ÈôÎ´¶¨Òå£¬Ôò×Ô¶¯Éú³É²¢±£´æÔÚTMPÏÂ*/
         $tables = Config::get('TABLE_CONF');
 
         foreach((array)$tables as $k=>$v) {
@@ -126,7 +126,7 @@ class DAO__DAO__ extends DAOProxy{
         $path = TMP_DIR."/dao/DAO".$class.".php";
         if($getLock) {
             Files::write($path, $dao_script);
-        } else {//æ²¡æœ‰æ‹¿åˆ°é”ï¼Œç”Ÿæˆç¼“å­˜æ–‡ä»¶, ç›´æ¥include, ç¨‹åºé€»è¾‘ä¸­ç”¨åˆ°DAOæ—¶ä¸å†èµ°autoloadé€»è¾‘
+        } else {//Ã»ÓĞÄÃµ½Ëø£¬Éú³É»º´æÎÄ¼ş, Ö±½Óinclude, ³ÌĞòÂß¼­ÖĞÓÃµ½DAOÊ±²»ÔÙ×ßautoloadÂß¼­
             $tmpname = tempnam(TMP_DIR, 'dao');
             file_put_contents($tmpname, $dao_script);
             include($tmpname);
