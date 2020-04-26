@@ -254,9 +254,21 @@ class DAOProxy
     	return $this->dbWriter->execute($sql, $params, $is_open_safe);
     }/*}}}*/
    
+    //获取某个字段的值(单个)，return String
     public function getValue($field, $where, $params = array()) {/*{{{*/
         $sql = "select {$field} from {$this->getTable()} where {$where}";
         return $this->getDbReader()->getOne($sql, $params);
+	}/*}}}*/
+ 
+    //获取某个字段的值(列表)，return Array 
+    public function getValues($field, $where, $params = array()) {/*{{{*/
+        $sql = "select {$field} from {$this->getTable()} where {$where}";
+        $list = $this->getDbReader()->getAll($sql, $params);
+        if($list) {
+            return array_column($list, $field);
+        }
+
+        return array();
 	}/*}}}*/
 
     public function exists($relateid) {/*{{{*/
