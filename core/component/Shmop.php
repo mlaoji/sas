@@ -8,9 +8,10 @@ class Shmop
     protected $perms;
     protected $shmid;
      
-    public function __construct($key = null, $perms = 0644)
+    public function __construct($shmop_key_file = __FILE__, $perms = 0644)
     {
-        $this->shmkey = $key ? $key : ftok(__FILE__, 't');
+        //设置shmop的key, 避免缓存集中到一个内存块上
+        $this->shmkey = ftok($shmop_key_file, 't');
         $this->perms  = $perms;
     }
 

@@ -1,55 +1,47 @@
 <?php
+!defined("SHMOP_KEY_FILE") && define("SHMOP_KEY_FILE", __FILE__);
+
 class LocalCache
 {
-    static $shmkey;
+	private static function getShmop() {/*{{{*/
+        static $_shmop;
+        if(!$_shmop) {
+            $_shmop = new Shmop(SHMOP_KEY_FILE);
+        }
 
-    /**
-     * 设置shmop的key, 避免缓存集中到一个内存块上
-     * @param int $key: System V IPC key, 可以使用ftok 生成
-     */
-	public static function setShmopKey($key)
-    {
-        self::$shmkey = $key; 
-    }
+        return $_shmop;
+    }/*}}}*/
 
-	public static function set($key, $value, $ttl = 300)
-	{
+	public static function set($key, $value, $ttl = 300) {/*{{{*/
         if(function_exists("shmop_open")) {
-            $shmop = new Shmop(self::$shmkey ? self::$shmkey : ftok(__FILE__, "t"));
-            return $shmop->set($key, $value, $ttl);
+            return self::getShmop()->set($key, $value, $ttl);
         } else {
             return FileCache::set($key, $value, $ttl);
         }
- 	}
+ 	}/*}}}*/
     
-    public static function get($key)
-	{
+    public static function get($key) {/*{{{*/
         if(function_exists("shmop_open")) {
-            $shmop = new Shmop(self::$shmkey ? self::$shmkey : ftok(__FILE__, "t"));
-            return $shmop->get($key);
+            return self::getShmop()->get($key);
         } else {
             return FileCache::get($key);
         }
- 	}
+ 	}/*}}}*/
     
-    public static function delete($key)
-	{
+    public static function delete($key) {/*{{{*/
         if(function_exists("shmop_open")) {
-            $shmop = new Shmop(self::$shmkey ? self::$shmkey : ftok(__FILE__, "t"));
-            return $shmop->delete($key);
+            return self::getShmop()->delete($key);
         } else {
             return FileCache::delete($key);
         }
- 	}
+ 	}/*}}}*/
 
-    public static function getAll()
-	{
+    public static function getAll() {/*{{{*/
         if(function_exists("shmop_open")) {
-            $shmop = new Shmop(self::$shmkey ? self::$shmkey : ftok(__FILE__, "t"));
-            return $shmop->getAll();
+            return self::getShmop()->getAll();
         } else {
             return FileCache::getAll();
         }
- 	}
+ 	}/*}}}*/
 }
-	
+

@@ -20,5 +20,7 @@
 
 !defined("AUTOLOAD_PATH") && define("AUTOLOAD_PATH", "");//项目中自动加载的目录，多个用英文逗号分隔, 默认加载 src/component, src/models 
 
+!defined("SHMOP_KEY_FILE") && define("SHMOP_KEY_FILE", APPLICATION_DIR . '/config/App.conf.php');
+
 
 
