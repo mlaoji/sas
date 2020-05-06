@@ -41,5 +41,15 @@ class LocalCache
             return FileCache::delete($key);
         }
  	}
+
+    public static function getAll()
+	{
+        if(function_exists("shmop_open")) {
+            $shmop = new Shmop(self::$shmkey ? self::$shmkey : ftok(__FILE__, "t"));
+            return $shmop->getAll();
+        } else {
+            return FileCache::getAll();
+        }
+ 	}
 }
 	

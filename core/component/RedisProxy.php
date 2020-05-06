@@ -31,7 +31,13 @@ class RedisProxy
 
         try {
             $redis  = new Redis();
-            $redis->connect($config["host"], $config["port"], $config['timeout'] ? $config['timeout'] : 3);
+
+            if(true === $config["pconnect"]) {
+                $redis->pconnect($config["host"], $config["port"], $config['timeout'] ? $config['timeout'] : 0);
+            } else {
+                $redis->connect($config["host"], $config["port"], $config['timeout'] ? $config['timeout'] : 3);
+            }
+
             $redis->auth($config["password"]);
         } catch(RedisException $e) {
             throw new SasRedisException($e->getMessage(), $e->getCode());
