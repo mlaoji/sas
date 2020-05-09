@@ -273,7 +273,7 @@ class DAOProxy
    
     public function delRecordBy($where, $params = array(), $is_open_safe = true) {/*{{{*/
         list($where, $params) = $this->getFilter($where, $params);
-    	$sql = "delete from {$this->getTable()} where " . $$where;
+    	$sql = "delete from {$this->getTable()} where " . $where;
     	return $this->dbWriter->execute($sql, $params, $is_open_safe);
     }/*}}}*/
    
