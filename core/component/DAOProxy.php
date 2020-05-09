@@ -199,17 +199,18 @@ class DAOProxy
         return $fields;
 	}/*}}}*/
   
-	private function getFilter($filter = "") {/*{{{*/
+	private function getFilter($filter = "", $params = array()) {/*{{{*/
         if($this->filter && is_array($this->filter)) {
-            $db = $this->getDbReader();
+            $params = $params ? (array)$params : array();
             foreach($this->filter as $k => $v) {
-                $filter .= ($filter == "" ? "" : " and ") . "`$k`='" . $db->quote($v) ."'";
+                $filter .= ($filter == "" ? "" : " and ") . "`$k`=?";
+                $params[] = $v;
             }
 
             $this->filter = null;
         }
 
-        return $filter;
+        return array($filter, $params);
 	}/*}}}*/
 
 	public function getDbReader() {/*{{{*/
@@ -254,12 +255,14 @@ class DAOProxy
     }/*}}}*/
    
     public function getRecord($relateid) {/*{{{*/
-    	$sql = "select {$this->getFields()} from {$this->getTable()} where " . $this->getFilter($this->getPrimary() ."=?");
-    	return $this->getDbReader()->getRow($sql, $relateid);
+        list($where, $params) = $this->getFilter($this->getPrimary() ."=?", array($relateid));
+    	$sql = "select {$this->getFields()} from {$this->getTable()} where " . $where;
+    	return $this->getDbReader()->getRow($sql, $params);
     }/*}}}*/
 
     public function getRecordBy($where, $params = array()) {/*{{{*/
-    	$sql = "select {$this->getFields()} from {$this->getTable()} where " . $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
+    	$sql = "select {$this->getFields()} from {$this->getTable()} where " . $where;
     	return $this->getDbReader()->getRow($sql, $params);
     }/*}}}*/
     
@@ -269,19 +272,22 @@ class DAOProxy
     }/*}}}*/
    
     public function delRecordBy($where, $params = array(), $is_open_safe = true) {/*{{{*/
-    	$sql = "delete from {$this->getTable()} where " . $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
+    	$sql = "delete from {$this->getTable()} where " . $$where;
     	return $this->dbWriter->execute($sql, $params, $is_open_safe);
     }/*}}}*/
    
     //获取某个字段的值(单个)，return String
     public function getValue($field, $where, $params = array()) {/*{{{*/
-        $sql = "select {$field} from {$this->getTable()} where " . $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
+        $sql = "select {$field} from {$this->getTable()} where " . $where;
         return $this->getDbReader()->getOne($sql, $params);
 	}/*}}}*/
  
     //获取某个字段的值(列表)，return Array 
     public function getValues($field, $where, $params = array()) {/*{{{*/
-        $sql = "select {$field} from {$this->getTable()} where " . $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
+        $sql = "select {$field} from {$this->getTable()} where " . $where;
         $list = $this->getDbReader()->getAll($sql, $params);
         if($list) {
             return array_column($list, $field);
@@ -291,12 +297,14 @@ class DAOProxy
 	}/*}}}*/
 
     public function exists($relateid) {/*{{{*/
-        $sql = "select count(0) from {$this->getTable()} where " . $this->getFilter($this->getPrimary() ."=?");;
-        return (int)$this->getDbReader()->getOne($sql, $relateid) > 0;
+        list($where, $params) = $this->getFilter($this->getPrimary() ."=?", array($relateid));
+        $sql = "select count(0) from {$this->getTable()} where " . $where;
+        return (int)$this->getDbReader()->getOne($sql, $params) > 0;
 	}/*}}}*/
     
     public function existsBy($where, $params = array()) {/*{{{*/
-        $sql = "select count(0) from {$this->getTable()} where " . $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
+        $sql = "select count(0) from {$this->getTable()} where " . $where;
         return (int)$this->getDbReader()->getOne($sql, $params) > 0;
 	}/*}}}*/
   
@@ -305,7 +313,7 @@ class DAOProxy
         $index = $this->getIndex();
         $sql.= $index ? " force key(".$index.") " : "";
 
-        $where = $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
     	$sql.= $where != "" ? " where " . $where : "";
         return (int)$this->getDbReader()->getOne($sql, $params, false);
 	}/*}}}*/
@@ -319,7 +327,7 @@ class DAOProxy
         $index = $this->getIndex();
         $sql.= $index ? " force key(".$index.") " : "";
         
-        $where = $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
     	$sql.= $where != "" ? " where " . $where : "";
         
         if($order) {
@@ -338,7 +346,7 @@ class DAOProxy
         $index = $this->getIndex();
         $sql.= $index ? " force key(".$index.") " : "";
 
-        $where = $this->getFilter($where);
+        list($where, $params) = $this->getFilter($where, $params);
     	$sql.= $where != "" ? " where " . $where : "";
 
         if($order) {
