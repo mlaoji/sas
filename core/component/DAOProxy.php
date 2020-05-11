@@ -201,7 +201,7 @@ class DAOProxy
   
 	private function getFilter($filter = "", $params = array()) {/*{{{*/
         if($this->filter && is_array($this->filter)) {
-            $params = $params ? (array)$params : array();
+            $params = strpos($filter, "?") ? (array)$params : array();
             foreach($this->filter as $k => $v) {
                 $filter .= ($filter == "" ? "" : " and ") . "`$k`=?";
                 $params[] = $v;
