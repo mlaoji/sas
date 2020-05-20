@@ -75,7 +75,7 @@ class LocalCache
         return self::_getRedis(true);
 	}/*}}}*/
 
-    private function _getRedis($pconnect = false) { /*{{{*/
+    private static function _getRedis($pconnect = false) { /*{{{*/
 		static $redis;
         try{
             if(isset($redis) && $redis instanceof Redis && $redis->ping() == "+PONG") {

@@ -97,15 +97,12 @@ class DAOProxy
     }/*}}}*/
 
     public function getNumericHash($number, $base) {/*{{{*/
-		return abs($number % $base);
+        $unsign = (int)substr($number, -8);
+		return abs($unsign % $base);
 	}/*}}}*/
 
 	public function getStringHash($string, $base) {/*{{{*/
-		$unsign = sprintf("%u", crc32($string));
-        if ($unsign > 2147483647)
-        {
-			$unsign -= 4294967296;
-		}
+		$unsign = (int)substr(sprintf("%u", crc32($string)), -8);
 		return abs($unsign % $base);
 	}/*}}}*/
 
