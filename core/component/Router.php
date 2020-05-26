@@ -2,6 +2,7 @@
 class Router {
 	public static function parse($params, $path = "") {/*{{{*/
         $path = $path ? $path : $_SERVER["REQUEST_URI"];
+        $module = DEFAULT_MODULE;
 
         if("" != $path  && "/" != $path) {
             list($path,) = explode("?", $path, 2);
@@ -30,6 +31,16 @@ class Router {
 
                 if(count($path_info) > 0 && ENTRY_FILE != end($path_info)) {
                     $controller = array_shift($path_info);
+                    if(defined("ROUTER_HAS_MODULE")) {
+                       $modules = getRegModules(); 
+                       if(isset($modules[$controller])) {
+                           $module = $controller;
+                           $controller = array_shift($path_info);
+                           if(!$controller) {
+                               $controller = DEFAULT_CONTROLLER;
+                           }
+                       }
+                    }
                     $action = array_shift($path_info);
                     if(!$action) {
                         $action = DEFAULT_ACTION;
@@ -43,7 +54,7 @@ class Router {
                         $path_params[$k] = urldecode($v); 
                     }
 
-                    return array("controller" => $controller, "action" => $action, "path_params" => $path_params);
+                    return array("module" => $module, "controller" => $controller, "action" => $action, "path_params" => $path_params);
                 }
             }
         }
@@ -53,26 +64,36 @@ class Router {
             $counts = count($methods);
             switch($counts) {
             case 0:
+                $module = DEFAULT_MODULE;
                 $controller = DEFAULT_CONTROLLER;
                 $action = DEFAULT_ACTION;
                 break;
             case 1:
+                $module = DEFAULT_MODULE;
                 $controller = $methods[0];
                 $action = DEFAULT_ACTION;
                 break;
             case 2:
+                $module = DEFAULT_MODULE;
                 $controller = $methods[0];
                 $action = $methods[1];
                 break;
+            case 3:
+                $module = $methods[0];
+                $controller = $methods[1];
+                $action = $methods[2];
+                break;
             default:
-                $controller = $methods[0];
-                $action = $methods[1];
+                $module = DEFAULT_MODULE;
+                $controller = DEFAULT_CONTROLLER;
+                $action = DEFAULT_ACTION;
             }
         } else {
+            $module = ("" != $params[MODULE_ACCESSOR]) ? $params[MODULE_ACCESSOR] : DEFAULT_MODULE;
             $controller = ("" != $params[CONTROLLER_ACCESSOR]) ? $params[CONTROLLER_ACCESSOR] : DEFAULT_CONTROLLER;
             $action = ("" != $params[ACTION_ACCESSOR]) ? $params[ACTION_ACCESSOR] : DEFAULT_ACTION;
         }
 
-        return array("controller" => $controller, "action" => $action);
+        return array("module" => $module, "controller" => $controller, "action" => $action);
 	}/*}}}*/
 }

@@ -41,6 +41,11 @@ class DAO__DAO__ extends DAOProxy{
     }/*}}}*/
 
     public static function _genCache($_inc, $getLock = true) {/*{{{*/
+        $shmop_key_file = self::getShmopKeyFile();
+        if($shmop_key_file) {
+            define("SHMOP_KEY_FILE", $shmop_key_file);
+        }
+
         //删除load文件缓存
         Config::flushCache();
 
@@ -66,7 +71,7 @@ class DAO__DAO__ extends DAOProxy{
     private static function getAutoLoadContent($getLock = true) {/*{{{*/
         //get class path
         self::getClassPath(SAS_DIR.'/component');
-        self::getClassPath(APPLICATION_DIR.'/src/controllers');
+        //self::getClassPath(APPLICATION_DIR.'/src/controllers');
         self::getClassPath(APPLICATION_DIR.'/src/component');
         self::getClassPath(APPLICATION_DIR.'/src/models');
 
@@ -83,18 +88,38 @@ class DAO__DAO__ extends DAOProxy{
         self::getDAOClassPath($getLock);
 
         $_inc = 'define("AUTOLOAD_CACHED", ' . $_SERVER['REQUEST_TIME'] . ');';
+
+        list($modules, $controllers, $controller_classes) = self::getRegControllers();
+        
+        if($modules) {
+            $_inc .= 'define("ROUTER_HAS_MODULE", true);';
+            $_inc .= ' function getRegModules(){';
+            $_inc .= ' return '.var_export($modules, true).';';
+            $_inc .= '}';
+        }
+
+        $_inc .= ' function getRegControllers(){';
+        $_inc .= ' return '.var_export($controllers, true).';';
+        $_inc .= '}';
+
         $_inc .= ' function getClassPath($k){';
         $_inc .= ' $a = '.var_export(self::$classpaths, true).';';
+        $_inc .= ' $c = '.var_export($controller_classes, true).';';
+
         $_inc .= 'if(isset($a[$k])){';
         $_inc .= ' return $a[$k];';
+        $_inc .= '}elseif("" != MODULE && isset($c[MODULE][$k])) {';
+        $_inc .= ' return $c[MODULE][$k];';
+        $_inc .= '}elseif(isset($c[$k])) {';
+        $_inc .= ' return $c[$k];';
         $_inc .= '}else{';
         $_inc .= '$funcs = spl_autoload_functions();';
         $_inc .= 'if(count($funcs) > 1) { return;} else {die("Class $k is not found!");}}}';
+        
 
-        $controller_list = self::getRegControllers();
-        $_inc .= ' function getRegControllers(){';
-        $_inc .= ' return '.var_export($controller_list, true).';';
-        $_inc .= '}';
+        if(defined("SHMOP_KEY_FILE")) {
+            $_inc .= 'define("SHMOP_KEY_FILE", "' . SHMOP_KEY_FILE . '");';
+        }
 
         return $_inc;
     }/*}}}*/
@@ -141,19 +166,41 @@ class DAO__DAO__ extends DAOProxy{
             return array();
         }
 
-        $controller_files = scandir(APPLICATION_DIR.'/src/controllers');
+        return self::_getRegControllers(APPLICATION_DIR.'/src/controllers');
+    }/*}}}*/
 
+    //支持分组 module->controller
+    private static function _getRegControllers($path) {/*{{{*/
+        $modules = array();
         $controllers = array();
-        foreach ($controller_files as $controller) {
-            if($controller == '.git'||$controller == '.svn'||$controller == '.cvs'||$controller == '.'||$controller== '..') continue;
+        $controller_classes = array();
 
-            if (substr($controller,-14) == 'Controller.php') {
-                $controller_name= substr($controller,0,-14); 
+        $files = scandir($path);
+        foreach ($files as $f) {
+            if(($f == '.git') || ($f == '.svn') || ($f == '.') || ($f == '..')) continue;
+
+            if(is_dir($path . '/' . $f)) {
+                if(isset($controllers[$f])) {
+                    die("Repeatedly controller_name $f in file $path");
+                }
+                $modules[$f] = $f;
+                list(, $controllers[$f], $controller_classes[$f]) = self::_getRegControllers($path .'/'.$f); 
+            } elseif(substr($f, -14) == 'Controller.php') {
+                $controller_name= strtolower(substr($f, 0,-14)); 
                 $controllers[$controller_name] = $controller_name;
+
+                $classes = self::_getClassPath($path . '/' . $f);
+                foreach($classes as $clsname) {
+                    if(isset($controller_classes[$clsname])) {
+                        die("Repeatedly class $clsname in file $path/$f");
+                    }
+
+                    $controller_classes[$clsname] = $path . '/' . $f;
+                }
             }
         }
 
-        return $controllers;
+        return array($modules, $controllers, $controller_classes);
     }/*}}}*/
 
     private static function getClassPath($path) {/*{{{*/
@@ -201,5 +248,16 @@ class DAO__DAO__ extends DAOProxy{
         return $classes;
     }/*}}}*/
 
+    private static function getShmopKeyFile() {/*{{{*/
+        if(defined("LOCALCACHE_NAMESPACE") && LOCALCACHE_NAMESPACE != "" && is_dir(SYS_TMP_DIR)) {
+            $shmop_key_file = SYS_TMP_DIR . "/shmop-key-" . LOCALCACHE_NAMESPACE;
+            touch($shmop_key_file);
+            if(is_file($shmop_key_file)) {
+                return $shmop_key_file;
+            }
+        }
+
+        return null;
+    }/*}}}*/
 }
 

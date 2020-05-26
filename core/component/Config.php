@@ -29,14 +29,14 @@ class Config
                 self::flushCacheFiles($path .'/'.$f); 
             }
         } else {
-            $shmop = new Shmop(CONFIG_DIR.'/App.conf.php');
+            $shmop = new Shmop(defined("SHMOP_KEY_FILE") ? SHMOP_KEY_FILE : __FILE__);
             $shmop->delete($path);
         }
     }/*}}}*/
 
     private static function _getFileVars($file_path) {/*{{{*/
         if(function_exists("shmop_open")) {
-            $shmop = new Shmop(CONFIG_DIR.'/App.conf.php');
+            $shmop = new Shmop(defined("SHMOP_KEY_FILE") ? SHMOP_KEY_FILE : __FILE__);
             $s = $shmop->get($file_path);
             if(!$s) {
                 unset($s);

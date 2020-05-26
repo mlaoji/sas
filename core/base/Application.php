@@ -3,19 +3,22 @@ class Application
 {
 	private $action; 
 	private $controller; 
+	private $module; //对controller分组，仅支持一级
 	
 	private $controllerClass;  
 	private $controllerFileName;
 	
+	private $moduleAccessor;    
 	private $controllerAccessor;    
 	private $actionAccessor;    
 
-    //controller、action 用一个参数表示，用字符隔开
+    //module、controller、action 用一个参数表示，用字符隔开
 	private $methodAccessor;
 	         
 	private static $instance; 
 
 	private function __construct() {/*{{{*/
+		$this->moduleAccessor     = MODULE_ACCESSOR;
 		$this->controllerAccessor = CONTROLLER_ACCESSOR;
 		$this->actionAccessor     = ACTION_ACCESSOR;
 		$this->methodAccessor     = METHOD_ACCESSOR;
@@ -55,6 +58,7 @@ class Application
 	private function parseMethod() {/*{{{*/
         $methods = Router::parse($_REQUEST);
 
+        $this->module     = $methods["module"]; 
         $this->controller = $methods["controller"]; 
         $this->action     = $methods["action"]; 
 
@@ -63,17 +67,21 @@ class Application
             $_REQUEST = $_REQUEST + $methods["path_params"];
         }
 
+        define ('MODULE',$this->module);
         define ('CONTROLLER',$this->controller);
 		define ('ACTION',$this->action);
 	}/*}}}*/
 
 	private function parseController() {/*{{{*/
-        $controller_name = ucfirst($this->controller);
-		$this->controllerFileName = APPLICATION_DIR  . "/src/controllers/" . $controller_name. "Controller.php";
+		$this->controllerFileName = APPLICATION_DIR  . "/src/controllers/" . ($this->module ? $this->module . "/" : "") . ucfirst($this->controller). "Controller.php";
 
         if(defined('AUTOLOAD_CACHED')) {
             $reg_controllers = getRegControllers();
-            if(!isset($reg_controllers[$controller_name])) {
+            if($this->module) {
+                if(!isset($reg_controllers[$this->module][$this->controller])) {
+                    throw new SasFileException("Sorry, can't found controller file: " . $this->controllerFileName . " !");
+                }
+            } elseif(!isset($reg_controllers[$this->controller])) {
                 throw new SasFileException("Sorry, can't found controller file: " . $this->controllerFileName . " !");
             }
         } else {
