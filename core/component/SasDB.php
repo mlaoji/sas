@@ -48,9 +48,11 @@ class SasDBPDO
 	private $_log            = false;
 	private $_optimize       = false;
 	private $_transaction    = false;
-	private $_error_mode     = PDO::ERRMODE_EXCEPTION;
 	private $_reconnected    = false; //是否需要重新链接
 	private $_auto_reconnect = true;  //是否需要开启自动重连
+    private $_attributes     = array( //建立连接时setAttribute
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    );
 
 	public function __construct($config) {/*{{{*/
 		$this->_config = $config;
@@ -74,7 +76,10 @@ class SasDBPDO
 				throw new SasDBException($e->getMessage(), (int)$e->getCode());
 			}
 
-			$this->_conn->setAttribute(PDO::ATTR_ERRMODE, $this->_error_mode);
+            foreach($this->_attributes as $attr => $val) {
+                $this->_conn->setAttribute($attr, $val);
+            }
+
 			$this->execute("SET NAMES '{$this->_config["charset"]}'");
 			$this->execute("SET character_set_client=binary");
 		}
@@ -252,6 +257,23 @@ class SasDBPDO
 		return $data;
 	}/*}}}*/
 
+    //return stmt
+	public function getAllByCursor($sql, $params = array(), $safe = true) {/*{{{*/
+        //关闭缓存设置
+        $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+		return $this->query($sql, $params, $safe);
+	}/*}}}*/
+
+    //调用getAllByCursor返回的stmt
+    //foreach ($this->getCursor($stmt) as $row) {
+    //  var_dump($row);
+    //}
+	public function getCursor($stmt) {/*{{{*/
+        while ($record = $stmt->fetch($this->_fetch_type)) {
+            yield $record;
+        }
+	}/*}}}*/
+
 	private function _operate($table, $record, $operate, $condition = "", $params = array()) {/*{{{*/
 		if(in_array($operate, array("insert", "replace", "update"))) {
 			$fields = is_array($record) ? array_keys($record)   : array();
@@ -355,6 +377,10 @@ class SasDBPDO
 
 	public function setFetchMode($fetch_type = PDO:: FETCH_ASSOC) {/*{{{*/
 		$this->_fetch_type = $fetch_type;
+	}/*}}}*/
+
+	public function setAttribute($attr, $val) {/*{{{*/
+		$this->_attributes[$attr] = $val;
 	}/*}}}*/
 
 	public function setLog($flag = false) {/*{{{*/
