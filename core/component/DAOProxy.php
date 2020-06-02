@@ -287,7 +287,7 @@ class DAOProxy
         $sql = "select {$field} from {$this->getTable()} where " . $where;
         $list = $this->getDbReader()->getAll($sql, $params);
         if($list) {
-            return array_column($list, $field);
+            return array_unique(array_column($list, $field));
         }
 
         return array();

@@ -186,7 +186,7 @@ class DAO__DAO__ extends DAOProxy{
                 $modules[$f] = $f;
                 list(, $controllers[$f], $controller_classes[$f]) = self::_getRegControllers($path .'/'.$f); 
             } elseif(substr($f, -14) == 'Controller.php') {
-                $controller_name= strtolower(substr($f, 0,-14)); 
+                $controller_name = substr($f, 0,-14); 
                 $controllers[$controller_name] = $controller_name;
 
                 $classes = self::_getClassPath($path . '/' . $f);

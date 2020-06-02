@@ -73,15 +73,16 @@ class Application
 	}/*}}}*/
 
 	private function parseController() {/*{{{*/
-		$this->controllerFileName = APPLICATION_DIR  . "/src/controllers/" . ($this->module ? $this->module . "/" : "") . ucfirst($this->controller). "Controller.php";
+        $controller_name = ucfirst($this->controller);
+		$this->controllerFileName = APPLICATION_DIR  . "/src/controllers/" . ($this->module ? $this->module . "/" : "") . $controller_name . "Controller.php";
 
         if(defined('AUTOLOAD_CACHED')) {
             $reg_controllers = getRegControllers();
             if($this->module) {
-                if(!isset($reg_controllers[$this->module][$this->controller])) {
+                if(!isset($reg_controllers[$this->module][$controller_name])) {
                     throw new SasFileException("Sorry, can't found controller file: " . $this->controllerFileName . " !");
                 }
-            } elseif(!isset($reg_controllers[$this->controller])) {
+            } elseif(!isset($reg_controllers[$controller_name])) {
                 throw new SasFileException("Sorry, can't found controller file: " . $this->controllerFileName . " !");
             }
         } else {
