@@ -108,7 +108,7 @@ class DAO__DAO__ extends DAOProxy{
 
         $_inc .= 'if(isset($a[$k])){';
         $_inc .= ' return $a[$k];';
-        $_inc .= '}elseif("" != MODULE && isset($c[MODULE][$k])) {';
+        $_inc .= '}elseif(defined("MODULE") && "" != MODULE && isset($c[MODULE][$k])) {';
         $_inc .= ' return $c[MODULE][$k];';
         $_inc .= '}elseif(isset($c[$k])) {';
         $_inc .= ' return $c[$k];';
