@@ -5,7 +5,11 @@ abstract class Controller implements IController{
     private static $strip_tags= false;//是否对参数进行strip_tags过滤
 
     public function __construct(){}
-    
+     
+    public function getGroupName() {/*{{{*/
+        return MODULE;
+    }/*}}}*/
+
     public function getControllerName() {/*{{{*/
         return CONTROLLER;
     }/*}}}*/
