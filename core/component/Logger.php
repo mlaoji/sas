@@ -174,8 +174,9 @@ class Logger
         $time_used = microtime(true)*1000 - $this->start_time;
 
         $str = sprintf(
-            "%s: %s [%s:%d] errno[%d] ip[%s] logId[%u] uri[%s] time_used[%d] %s%s\n",
+            "%s:%s %s [%s:%d] errno[%d] ip[%s] logId[%u] uri[%s] time_used[%d] %s%s\n",
             $level_name,
+            $_SERVER["REQUEST_METHOD"],
             date('m-d H:i:s:', time()),
             $filename, 
             $line, 
