@@ -167,11 +167,7 @@ class Application
 
             $controller->$action_name();
         } catch(SasRunException $e) {
-            if(method_exists($this->controllerClass, "renderError")) {
-                call_user_func(array($this->controllerClass, "renderError"), $e);
-            } else {
-                throw $e;
-            }
+            $this->controllerClass::renderError($e);
         }
 	}/*}}}*/
 	

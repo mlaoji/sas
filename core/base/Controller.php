@@ -69,14 +69,18 @@ abstract class Controller implements IController{
         Container::find("Template")->render($tplname);
     }/*}}}*/
 
-    public static function renderError($e) {}
+    //错误处理，可在业务代码中重写此方法
+    public static function renderError($e) {/*{{{*/
+        throw $e;
+    }/*}}}*/
 
+    //todo:废弃
 	public static function consumeStart() {/*{{{*/
-		self::$startTime = microtime(true);	
 	}/*}}}*/
 	
+    //脚本执行时间
 	public static function getConsumeTime() {/*{{{*/
-		return round((microtime(true) - self::$startTime) * 1000);
+		return round((microtime(true) - $GLOBALS["_sas_start_time_"]) * 1000);
 	}/*}}}*/
 
     public function __call($name, $parameter) {/*{{{*/

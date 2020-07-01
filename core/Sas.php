@@ -1,6 +1,9 @@
 <?php
 error_reporting(E_ALL & ~E_NOTICE);
 
+//脚本开始时间，用于计算脚本执行时长
+$GLOBALS['_sas_start_time_'] = microtime(true);	
+
 //模式：DEV: 开发模式 TEST: 测试模式 RELEASE: 线上模式
 !defined("MODE") && define("MODE", "RELEASE");
 !defined("TMP_DIR") && define("TMP_DIR", APPLICATION_DIR.'/tmp');
