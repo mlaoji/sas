@@ -5,11 +5,15 @@ class Import {
     private static $dao_tpl = '<?php 
 class DAO__DAO__ extends DAOProxy{
     private static $instance;
-    public function __construct($shard_value = null) {
-        parent::__construct("__TABLE__", $shard_value);
+    public function __construct($shard_value = null, $newins = false) {
+        parent::__construct("__TABLE__", $shard_value, $newins);
     } 
 
-    public static function getInstance($shard_value = null) {
+    public static function getInstance($shard_value = null, $newins = false) {
+        if($newins) {
+            return new self($shard_value, true);
+        }
+
         $shard = $shard_value ? $shard_value : 0;
         if(!isset(self::$instance[$shard])) {
             self::$instance[$shard]=new self($shard_value);

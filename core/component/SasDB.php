@@ -14,21 +14,32 @@ class SasDB
 	"options"=>array()
 	);
 
-	public static function getInstance($config = array()) {/*{{{*/
+	public static function getInstance($config = array(), $newins = false) {/*{{{*/
+        if($newins) {
+			$final_config = self::_getFinalConfig($config);
+            return new SasDBPDO($final_config);
+        }
+
 		$key = md5(serialize($config));
 
 		if(!isset(self::$_container[$key]) || !(self::$_container[$key] instanceof SasDBPDO)) {
-			$final_config = array();
-			foreach(self::$_default_config as $index=>$value) {
-				$final_config[$index] = isset($config[$index]) && ('' !== $config[$index]) ? $config[$index] : self::$_default_config[$index];
-			}
+			$final_config = self::_getFinalConfig($config);
 			self::$_container[$key] = new SasDBPDO($final_config);
 		}
 
 		return self::$_container[$key];
 	}/*}}}*/
+    
+    public static function _getFinalConfig($config = array()) {/*{{{*/
+        $final_config = array();
+        foreach(self::$_default_config as $index=>$value) {
+            $final_config[$index] = isset($config[$index]) && ('' !== $config[$index]) ? $config[$index] : self::$_default_config[$index];
+        }
 
-    public static function destroyInstance($config=array()) {/*{{{*/
+        return $final_config;
+    }/*}}}*/
+
+    public static function destroyInstance($config = array()) {/*{{{*/
          $key = md5(serialize($config)); 
          if(isset(self::$_container[$key]) && (self::$_container[$key] instanceof SasDBPDO))
          {
@@ -261,12 +272,7 @@ class SasDBPDO
 	public function getAllByCursor($sql, $params = array(), $safe = true) {/*{{{*/
         //关闭缓存设置
         $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-		$stmt = $this->query($sql, $params, $safe);
-
-        //查询一次后打开
-        $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
-
-        return $stmt;
+		return $this->query($sql, $params, $safe);
 	}/*}}}*/
 
     //调用getAllByCursor返回的stmt

@@ -14,7 +14,7 @@ class DAOProxy
 	protected $dbWriter;
 	protected $dbReader;
 
-    public function __construct($dao_name, $shard_value = null){/*{{{*/
+    public function __construct($dao_name, $shard_value = null, $newins = false){/*{{{*/
         $dbs_config = Config::get("DB_CONF");
         $tables_config = Config::get("TABLE_CONF");
 
@@ -25,7 +25,7 @@ class DAOProxy
         $table_config = $tables_config[$dao_name];
         $host_id = $this->getHostId($table_config, $shard_value);
         $db_config = $dbs_config[$host_id];
-        $this->dbWriter =  SasDB::getInstance($db_config["master"]);
+        $this->dbWriter =  SasDB::getInstance($db_config["master"], $newins);
         if(true === $db_config["master"]["debug"]) {
             $this->dbWriter->setDebug(true);
         }
@@ -42,7 +42,7 @@ class DAOProxy
             $this->dbReader = $this->dbWriter;
         } else {
             $slave_key  = array_rand($db_config["slaves"]);
-            $this->dbReader =  SasDB::getInstance($db_config["slaves"][$slave_key]);
+            $this->dbReader =  SasDB::getInstance($db_config["slaves"][$slave_key], $newins);
             
             if(true === $db_config["slaves"][$slave_key]["debug"]) {
                 $this->dbReader->setDebug(true);
