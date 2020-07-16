@@ -261,7 +261,12 @@ class SasDBPDO
 	public function getAllByCursor($sql, $params = array(), $safe = true) {/*{{{*/
         //关闭缓存设置
         $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-		return $this->query($sql, $params, $safe);
+		$stmt = $this->query($sql, $params, $safe);
+
+        //查询一次后打开
+        $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+
+        return $stmt;
 	}/*}}}*/
 
     //调用getAllByCursor返回的stmt
@@ -381,6 +386,9 @@ class SasDBPDO
 
 	public function setAttribute($attr, $val) {/*{{{*/
 		$this->_attributes[$attr] = $val;
+        if($this->_conn != null) {
+            $this->_conn->setAttribute($attr, $val);
+        }
 	}/*}}}*/
 
 	public function setLog($flag = false) {/*{{{*/
