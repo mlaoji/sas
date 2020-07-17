@@ -3,23 +3,18 @@ class SasDB
 {
 	private static $_container      = array();
 	private static $_default_config = array(
-	"host"=>"127.0.0.1",
-	"port"=>"3306",
-	"user"=>"root",
-	"pass"=>"",
-	"charset"=>"utf8mb4",
-	"dbname"=>"test",
-	"persistent"=>true,
-	"unix_socket"=>"",
-	"options"=>array()
-	);
+        "host"=>"127.0.0.1",
+        "port"=>"3306",
+        "user"=>"root",
+        "pass"=>"",
+        "charset"=>"utf8mb4",
+        "dbname"=>"test",
+        "persistent"=>true,
+        "unix_socket"=>"",
+        "options"=>array()
+    );
 
-	public static function getInstance($config = array(), $newins = false) {/*{{{*/
-        if($newins) {
-			$final_config = self::_getFinalConfig($config);
-            return new SasDBPDO($final_config);
-        }
-
+	public static function getInstance($config = array()) {/*{{{*/
 		$key = md5(serialize($config));
 
 		if(!isset(self::$_container[$key]) || !(self::$_container[$key] instanceof SasDBPDO)) {
@@ -30,7 +25,7 @@ class SasDB
 		return self::$_container[$key];
 	}/*}}}*/
     
-    public static function _getFinalConfig($config = array()) {/*{{{*/
+    private static function _getFinalConfig($config = array()) {/*{{{*/
         $final_config = array();
         foreach(self::$_default_config as $index=>$value) {
             $final_config[$index] = isset($config[$index]) && ('' !== $config[$index]) ? $config[$index] : self::$_default_config[$index];
@@ -270,9 +265,15 @@ class SasDBPDO
 
     //return stmt
 	public function getAllByCursor($sql, $params = array(), $safe = true) {/*{{{*/
-        //关闭缓存设置
+        //关闭缓存设置,否则会一次性取出
         $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-		return $this->query($sql, $params, $safe);
+
+		$stmt  = $this->query($sql, $params, $safe);
+
+        //使用后再次打开缓存设置
+        $this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+
+        return $stmt;
 	}/*}}}*/
 
     //调用getAllByCursor返回的stmt
