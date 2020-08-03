@@ -338,6 +338,7 @@ class DAOProxy
     	return $this->getDbReader()->getAll($sql, $params, false);
     }/*}}}*/
  
+    //大数据下会有性能问题，请谨慎使用
     public function getList($where = "", $params = array(), $start = 0, $num = 0, $order = "") {/*{{{*/
         $sql = "select SQL_CALC_FOUND_ROWS {$this->getFields()} from {$this->getTable()}";
         $index = $this->getIndex();
