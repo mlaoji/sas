@@ -6,34 +6,35 @@
  require_once('Logger.php');
  define('PROCESS_START_TIME', microtime(true) * 1000);
  $GLOBALS['LOG'] = array(
-    'level'         => 0x07,        //access, fatal, warn
-    'logfile'       => '/home/q/test/log/test.log', //test.log.wf will be the wf log file
-    'split'         => 1,          //0 not split, 1 split by day, 2 split by hour
+    'level'         => 0x07,        //error, warn, access
+    'logfile'       => '/home/q/test/log/test.log', //按级别会在末尾追加后缀,如:test.log.warn
+    'split'         => 1,          //0 不切分, 1 按天切分, 2 按小时切分
     'others '       => array(
         'xxx'      => '/home/q/test/log/acstat.sdf.log',//不配置默认记到logfile同目录
         ),
     );
 
  $str = 'log me';
- Logger::access($str);
- Logger::notice($str);
- Logger::fatal($str);
+ Logger::error($str);
  Logger::warn($str);
+ Logger::access($str);
+ Logger::info($str);
  Logger::debug($str);
+ Logger::other('other_log', $str);
 
  **/
 class Logger
 {
     const LOG_LEVEL_NONE    = 0x00;
-    const LOG_LEVEL_ACCESS  = 0x01;
-    const LOG_LEVEL_FATAL   = 0x02;
-    const LOG_LEVEL_WARN    = 0x04;
-    const LOG_LEVEL_NOTICE  = 0x08;
+    const LOG_LEVEL_ERROR   = 0x01;
+    const LOG_LEVEL_WARN    = 0x02;
+    const LOG_LEVEL_ACCESS  = 0x04;
+    const LOG_LEVEL_INFO    = 0x08;
     const LOG_LEVEL_DEBUG   = 0x10;
     const LOG_LEVEL_ALL     = 0xFF;
     
     const LOG_SPLIT_NONE = 0;
-    const LOG_SPLIT_DAY = 1;
+    const LOG_SPLIT_DAY  = 1;
     const LOG_SPLIT_HOUR = 2;
 
     /**
@@ -41,10 +42,10 @@ class Logger
      */
     public static $levels = array(
         self::LOG_LEVEL_NONE    => 'NONE',
-        self::LOG_LEVEL_ACCESS  => 'ACCESS',
-        self::LOG_LEVEL_FATAL   => 'FATAL',
+        self::LOG_LEVEL_ERROR   => 'ERROR',
         self::LOG_LEVEL_WARN    => 'WARN',
-        self::LOG_LEVEL_NOTICE  => 'NOTICE',
+        self::LOG_LEVEL_ACCESS  => 'ACCESS',
+        self::LOG_LEVEL_INFO    => 'INFO',
         self::LOG_LEVEL_DEBUG   => 'DEBUG',
         self::LOG_LEVEL_ALL     => 'ALL',
     );
@@ -92,9 +93,9 @@ class Logger
         return $instance->writeLog(self::LOG_LEVEL_DEBUG, $errlog, $errorno, $args, $depth + 1);
     }/*}}}*/
 
-    public static function notice($errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
+    public static function info($errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
         $instance = self::getInstance();
-        return $instance->writeLog(self::LOG_LEVEL_NOTICE, $errlog, $errorno, $args, $depth + 1);
+        return $instance->writeLog(self::LOG_LEVEL_INFO, $errlog, $errorno, $args, $depth + 1);
     }/*}}}*/
 
     public static function warn($errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
@@ -102,9 +103,9 @@ class Logger
         return $instance->writeLog(self::LOG_LEVEL_WARN, $errlog, $errorno, $args, $depth + 1);
     }/*}}}*/
 
-    public static function fatal($errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
+    public static function error($errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
         $instance = self::getInstance();
-        return $instance->writeLog(self::LOG_LEVEL_FATAL, $errlog, $errorno, $args, $depth + 1);
+        return $instance->writeLog(self::LOG_LEVEL_ERROR, $errlog, $errorno, $args, $depth + 1);
     }/*}}}*/
 
     public static function access($errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
@@ -150,12 +151,12 @@ class Logger
     }/*}}}*/
 
     public function writeLog($level, $errlog, $errorno = 0, $args = null, $depth = 0) {/*{{{*/
-        if ($level > $this->level || !isset(self::$levels[$level])) {
+        if (($level&$this->level) == 0) {
             return;
         }
 
         $level_name    = self::$levels[$level];
-        $log_file = $this->getLogFile($level);
+        $log_file = $this->getLogFile($level_name);
 
         $debug_trace = debug_backtrace();
         if ($depth >= count($debug_trace)) {
@@ -219,11 +220,13 @@ class Logger
         return file_put_contents($log_file, $str, FILE_APPEND);
     }/*}}}*/
 
-    private function getLogFile($level) {/*{{{*/
+    private function getLogFile($level_name) {/*{{{*/
         $log_file = $this->log_file;
-        if (($level & self::LOG_LEVEL_WARN) || ($level & self::LOG_LEVEL_FATAL)) {
-            $log_file .= '.wf';
+
+        if ($level_name != "ACCESS") {
+            $log_file .= '.' . strtolower($level_name);
         }
+
         if ($this->log_split == self::LOG_SPLIT_DAY) {
             $log_file .= '.' . date("Ymd");
         } elseif ($this->log_split == self::LOG_SPLIT_HOUR) {
