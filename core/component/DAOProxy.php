@@ -23,7 +23,18 @@ class DAOProxy
         }
 
         $table_config = $tables_config[$dao_name];
-        $host_id = $this->getHostId($table_config, $shard_value);
+        $table_name = isset($table_config["table"]) ? $table_config["table"] : $dao_name;
+        $primary = isset($table_config["key"]) ? $table_config["key"] : "id";
+        $fields = isset($table_config["fields"]) ? $table_config["fields"] : "*";
+
+        $table_hash = null;
+        if(isset($table_config["table_shard"]) && !empty($table_config["table_shard"])) {
+            $table_hash = $this->getNumericHash($shard_value, $table_config["table_shard"]); 
+            $table_name .= "_" . $table_hash; 
+        }
+
+        $host_id = $this->getHostId($table_config, $shard_value, $table_hash);
+
         $db_config = $dbs_config[$host_id];
         $this->dbWriter =  SasDB::getInstance($db_config["master"]);
         if(true === $db_config["master"]["debug"]) {
@@ -57,14 +68,6 @@ class DAOProxy
             }
         }
 
-        $table_name = isset($table_config["table"]) ? $table_config["table"] : $dao_name;
-        $primary = isset($table_config["key"]) ? $table_config["key"] : ($table_name . "id");
-        $fields = isset($table_config["fields"]) ? $table_config["fields"] : "*";
-
-        if(isset($table_config["table_shard"]) && !empty($table_config["table_shard"])) {
-            $table_name .= "_" . $this->getNumericHash($shard_value, $table_config["table_shard"]); 
-        }
-
         $this->setTable($table_name);
         $this->setPrimary($primary);
         $this->setDefaultFields($fields);
@@ -78,7 +81,7 @@ class DAOProxy
         return new static();
     }/*}}}*/
 
-    private function getHostId($table_config, $shard_value) {/*{{{*/
+    private function getHostId($table_config, $shard_value, $table_hash) {/*{{{*/
         $host_id = 0;
         
         if(isset($table_config["host_id"])) {
@@ -86,9 +89,14 @@ class DAOProxy
         }
 
         if(isset($table_config["db_shard"]) && !empty($table_config["db_shard"])) {
+            if(is_null($table_hash)) {
+                $table_hash = $shard_value;
+            }
+
             foreach($table_config["db_shard"] as $k => $v) {
-                if($shard_value <= $v) {
+                if($table_hash <= $k) {
                     $host_id = $v;
+                    break;
                 }
             }
         }

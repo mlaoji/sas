@@ -26,7 +26,7 @@ $TABLE_CONF＝array(//未配置则为默认值
         //分表规则
         'table_shard'=>"分表数量", 
         //分库规则
-        'db_shard'=>array(
+        'db_shard'=>array(//使用table_shard分表时,db_shard表示table_shard对应的表索引范围，如:50指table_1~table_50; 否则，表示主键ID的值范围
             10000000 => "服务器ID",//0< id <=10000000
             20000000 => "服务器ID",//10000000 < id <= 20000000
         ),
