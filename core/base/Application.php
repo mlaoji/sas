@@ -110,8 +110,7 @@ class Application
      * Parse request vars
      */
     private function parseRequest() {/*{{{*/
-		ini_set('magic_quotes_runtime',0);
-        $mqg = function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc(); 
+        $mqg = ini_set("magic_quotes_runtime", 0);
 
         $_GET     && $this->stripVars($_GET, $mqg);
         $_REQUEST && $this->stripVars($_REQUEST, $mqg);

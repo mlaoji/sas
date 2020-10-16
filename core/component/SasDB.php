@@ -151,7 +151,8 @@ class SasDBPDO
 			}
 		} else {
 			try {
-				$arr_exec_result = $this->_exec($sql, $params);
+                //屏蔽错误，捕获异常处理
+				$arr_exec_result = @$this->_exec($sql, $params);
 			} catch (PDOException $e) {
 				if($this->_auto_reconnect && in_array($e->errorInfo[1], array(2013, 2006))) {
 					try {
