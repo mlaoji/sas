@@ -9,7 +9,7 @@
          self::mkdirs(dirname($file));
 
          if('' == $contents) {
-             return touch($file);
+             return file_put_contents($file, '');
          }
 
          $fp = fopen($file, "a");

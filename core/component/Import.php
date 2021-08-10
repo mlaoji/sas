@@ -41,12 +41,7 @@ class DAO__DAO__ extends DAOProxy{
     }/*}}}*/
 
     public static function _genCache($_inc, $getLock = true) {/*{{{*/
-        $shmop_key_file = self::getShmopKeyFile();
-        if($shmop_key_file) {
-            define("SHMOP_KEY_FILE", $shmop_key_file);
-        }
-
-        //É¾³ýloadÎÄ¼þ»º´æ
+        //É¾³ýÅäÖÃÎÄ¼þ»º´æ
         Config::flushCache();
 
         //get class path
@@ -116,11 +111,6 @@ class DAO__DAO__ extends DAOProxy{
         $_inc .= '$funcs = spl_autoload_functions();';
         $_inc .= 'if(count($funcs) > 1) { return;} else {die("Class $k is not found!");}}}';
         
-
-        if(defined("SHMOP_KEY_FILE")) {
-            $_inc .= 'define("SHMOP_KEY_FILE", "' . SHMOP_KEY_FILE . '");';
-        }
-
         return $_inc;
     }/*}}}*/
 
@@ -248,16 +238,5 @@ class DAO__DAO__ extends DAOProxy{
         return $classes;
     }/*}}}*/
 
-    private static function getShmopKeyFile() {/*{{{*/
-        if(defined("LOCALCACHE_NAMESPACE") && LOCALCACHE_NAMESPACE != "" && is_dir(SYS_TMP_DIR)) {
-            $shmop_key_file = SYS_TMP_DIR . "/shmop-key-" . LOCALCACHE_NAMESPACE;
-            touch($shmop_key_file);
-            if(is_file($shmop_key_file)) {
-                return $shmop_key_file;
-            }
-        }
-
-        return null;
-    }/*}}}*/
 }
 

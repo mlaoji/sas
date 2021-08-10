@@ -59,7 +59,8 @@ class Shmop
                 }
             }
 
-            $content = json_encode($data);
+            //json_encode 对二进制不友好，所以使用serialize
+            $content = serialize($data);
 
             if($this->open(strlen($content))) {
                 shmop_write($this->shmid, $content, 0);
@@ -80,7 +81,7 @@ class Shmop
      */
     public function getAll()
     {
-        return $this->open() ? json_decode(trim(shmop_read($this->shmid, 0, 0)), true) : array();
+        return $this->open() ? unserialize(trim(shmop_read($this->shmid, 0, 0))) : array();
     }
 
     /**
@@ -104,10 +105,14 @@ class Shmop
                 }
             }
 
-            $content = json_encode($data);
+            if(empty($data)) {
+                shmop_delete($this->shmid);
+            } else {
+                $content = serialize($data);
 
-            if($this->open(strlen($content))) {
-                shmop_write($this->shmid, $content, 0);
+                if($this->open(strlen($content))) {
+                    shmop_write($this->shmid, $content, 0);
+                }
             }
         
             flock($fp, LOCK_UN);
@@ -124,6 +129,13 @@ class Shmop
         $data  = $this->getAll();
         return isset($data[$key]) && isset($data[$key]["val"]) && (!$data[$key]["expire"] || $data[$key]["expire"] > time()) ? $data[$key]["val"] : "";
     }
+
+    public function flush()
+    {/*{{{*/
+        if($this->open()) {
+            shmop_delete($this->shmid);
+        }
+    }/*}}}*/
 
     public function __destruct()
     {

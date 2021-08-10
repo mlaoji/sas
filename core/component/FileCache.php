@@ -4,20 +4,18 @@ class FileCache
 {
 	public static function set($key, $value, $ttl = 300)
 	{/*{{{*/
-		$name = md5($key);
-		$dir  = self::getdir($name);
         $expire = $ttl > 0 ? ($ttl > 315360000 ? $ttl: (time() + $ttl)) : 0;
-
-        return Files::write($dir.'/'.$name, json_encode(array("key" => $key, "expire" => $expire, "val" => $value)), true);
+        //json_encode 对二进制不友好，所以使用serialize
+        return Files::write(self::getFile($key), serialize(array("key" => $key, "expire" => $expire, "val" => $value)), true);
  	}/*}}}*/
 
 	public static function get($key)
 	{/*{{{*/
-        $name=md5($key);
-		$dir=self::getdir($name);
-		if(is_file($dir.'/'.$name)) {
-            $data = file_get_contents($dir.'/'.$name);
-            $contents = json_decode($data, true);
+        $file = self::getFile($key);
+
+		if(is_file($file)) {
+            $data = file_get_contents($file);
+            $contents = unserialize($data, true);
 
             return (isset($contents["val"]) && (!$contents["expire"] || $contents["expire"] > time()))  ? $contents["val"] : "";
         }
@@ -27,9 +25,13 @@ class FileCache
 
     public static function delete($key)
 	{/*{{{*/
+		return @unlink(self::getFile($key));
+ 	}/*}}}*/
+    
+    public static function getFile($key)
+	{/*{{{*/
 		$name = md5($key);
-		$dir  = self::getdir($name);
-		return @unlink($dir.'/'.$name);
+        return self::getdir($name) . '/' . $name;
  	}/*}}}*/
 
 	public static function flush()
@@ -48,7 +50,7 @@ class FileCache
         while($f = scandir($dir)) {
             if(is_file($f)) {
                 $data = file_get_contents($f);
-                $contents = json_decode($data, true);
+                $contents = unserialize($data, true);
 
                 if(isset($contents["key"])) {
                     $cache[$contents["key"]] = array("expire" => $contents["expire"], "val" => $contents["val"]);
