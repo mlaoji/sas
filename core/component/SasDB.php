@@ -54,7 +54,6 @@ class SasDBPDO
 	private $_log            = false;
 	private $_optimize       = false;
 	private $_transaction    = false;
-	private $_reconnected    = false; //是否需要重新链接
 	private $_auto_reconnect = true;  //是否需要开启自动重连
     private $_attributes     = array( //建立连接时setAttribute
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
@@ -135,38 +134,21 @@ class SasDBPDO
 			throw new SasDBException("为避免操作异常，请使用包装后的事务处理接口[startTrans, commit, rollback]");
 		}
 
-		if($this->_transaction) {
-			if($this->_reconnected) {
-				throw new SasDBException("数据库链接已丢失!");
-			} else {
-				try {
-					$arr_exec_result = $this->_exec($sql, $params);
-				} catch (PDOException $e) {
-					if(in_array($e->errorInfo[1], array(2013, 2006))) {
-						$this->_reconnected = true;
-					}
-
+        try {
+            //屏蔽错误，捕获异常处理
+            $arr_exec_result = @$this->_exec($sql, $params);
+        } catch (PDOException $e) {
+            if($this->_auto_reconnect && in_array($e->errorInfo[1], array(2013, 2006)) && !$this->_transaction) {
+                try {
+                    $this->close();
+                    $arr_exec_result = $this->_exec($sql, $params);
+                } catch (PDOException $e) {
                     throw new SasDBException($e->getMessage(), (int)$e->getCode());
-				}
-			}
-		} else {
-			try {
-                //屏蔽错误，捕获异常处理
-				$arr_exec_result = @$this->_exec($sql, $params);
-			} catch (PDOException $e) {
-				if($this->_auto_reconnect && in_array($e->errorInfo[1], array(2013, 2006))) {
-					try {
-                        $this->close();
-						$arr_exec_result = $this->_exec($sql, $params);
-						$this->_reconnected = true;
-					} catch (PDOException $e) {
-                        throw new SasDBException($e->getMessage(), (int)$e->getCode());
-					}
-				} else {
-					throw new SasDBException($e->getMessage(), (int)$e->getCode());
-				}
-			}
-		}
+                }
+            } else {
+                throw new SasDBException($e->getMessage(), (int)$e->getCode());
+            }
+        }
 
 		return $arr_exec_result;
 	}/*}}}*/
@@ -411,13 +393,22 @@ class SasDBPDO
         $this->_connect();
 
 		try {
-			$this->_conn->beginTransaction();
+			@$this->_conn->beginTransaction();
 		} catch (PDOException $e) {
-            throw new SasDBException($e->getMessage(), (int)$e->getCode());
+            if($this->_auto_reconnect && in_array($e->errorInfo[1], array(2013, 2006))) {
+                try {
+                    $this->close();
+                    $this->_connect();
+                    $this->_conn->beginTransaction();
+                } catch (PDOException $e) {
+                    throw new SasDBException($e->getMessage(), (int)$e->getCode());
+                }
+            } else {
+                throw new SasDBException($e->getMessage(), (int)$e->getCode());
+            }
 		}
 
 		$this->_transaction = true;
-		$this->_reconnected = false;
 	}/*}}}*/
 
 	public function commit() {/*{{{*/
@@ -426,7 +417,6 @@ class SasDBPDO
 		}
 
 		$this->_transaction = false;
-		$this->_reconnected = false;
 
 		try {
 			$this->_conn->commit();
@@ -441,7 +431,6 @@ class SasDBPDO
 		}
 
 		$this->_transaction = false;
-		$this->_reconnected = false;
 
 		try {
 			$this->_conn->rollback();
