@@ -23,7 +23,11 @@ class DAO__DAO__ extends DAOProxy{
             mkdir(TMP_DIR, 0777, true);
         }
 
-        $fp = @fopen(TMP_DIR . '/lock','w+');
+        try{
+            $fp = @fopen(TMP_DIR . '/lock','w+');
+        } catch(Exception $e) {
+        }
+
         if($fp) {
             //没有抢到锁不堵塞
             if(flock($fp, LOCK_EX | LOCK_NB)) {

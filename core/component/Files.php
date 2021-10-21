@@ -25,7 +25,10 @@
                  rename($tmp_file, $file);
                  flock($fp, LOCK_UN);
 
-                 @unlink($tmp_file);
+                 try{
+                     @unlink($tmp_file);
+                 } catch(Exception $e) {
+                 }
              } else {//写临时文件失败
                  ftruncate($fp, 0);
                  fwrite($fp, $contents); 
@@ -34,7 +37,10 @@
              }
 
              if("DEV" == MODE) {//解决开发环境 cli 和 nginx 使用不同用户时的权限问题
-                 @chmod($file, 0777);
+                 try{
+                     @chmod($file, 0777);
+                 } catch(Exception $e) {
+                 }
              }
          }
 
@@ -47,7 +53,10 @@
              mkdir($dir, $mode, true);
          }
 
-         @chmod($dir, $mode);
+         try{
+             @chmod($dir, $mode);
+         } catch(Exception $e) {
+         }
      }/*}}}*/
 
 }

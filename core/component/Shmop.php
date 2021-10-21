@@ -18,24 +18,34 @@ class Shmop
     public function open($size = 0) 
     {/*{{{*/
         if(0 == $size) {//只读
-            $this->shmid = $this->shmid ? $this->shmid : @shmop_open($this->shmkey, 'a', 0, 0);
-            return (bool)$this->shmid;
+            try{
+                $this->shmid = $this->shmid ? $this->shmid : @shmop_open($this->shmkey, 'a', 0, 0);
+                return (bool)$this->shmid;
+            } catch(Exception $e) {
+                return false;
+            }
         }
 
         //释放内存，重新申请, 每次按内容大小申请
         if($this->shmid) {
             if(shmop_size($this->shmid) != $size) {
-                if(!@shmop_delete($this->shmid)) {
+                try{
+                    if(!@shmop_delete($this->shmid)) {
+                        return false;
+                    }
+                } catch(Exception $e) {
                     return false;
                 }
             } 
 
             shmop_close($this->shmid);
         }
-
-        $this->shmid = @shmop_open($this->shmkey, 'c', $this->perms, $size);
-
-        return (bool)$this->shmid;
+        try{
+            $this->shmid = @shmop_open($this->shmkey, 'c', $this->perms, $size);
+            return (bool)$this->shmid;
+        } catch(Exception $e) {
+            return false;
+        }
     }/*}}}*/
  
     /**
@@ -69,7 +79,10 @@ class Shmop
             flock($fp, LOCK_UN);
 
             if("DEV" == MODE) {//解决开发环境 cli 和 nginx 使用不同用户时的权限问题
-                @chmod($lock, 0777);
+                try{
+                    @chmod($lock, 0777);
+                } catch(Exception $e) {
+                }
             }
         }
         fclose($fp);

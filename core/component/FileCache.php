@@ -25,7 +25,11 @@ class FileCache
 
     public static function delete($key)
 	{/*{{{*/
-		return @unlink(self::getFile($key));
+        try{
+            return @unlink(self::getFile($key));
+        } catch(Exception $e) {
+            return false;
+        }
  	}/*}}}*/
     
     public static function getFile($key)
